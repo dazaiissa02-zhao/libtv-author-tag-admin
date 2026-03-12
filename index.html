@@ -420,6 +420,37 @@
     }
     .icon-upload:hover { border-color: var(--blue); color: var(--blue); }
     .icon-upload img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+    .icon-upload-preview {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+    }
+    .icon-upload-preview img { width: 24px; height: 24px; object-fit: contain; }
+    .icon-upload-preview .icon-upload-remove {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 16px;
+      height: 16px;
+      background: var(--red);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+      border: 2px solid #fff;
+      padding: 0;
+    }
     .icon-upload-remove {
       position: absolute;
       top: -6px;
@@ -669,6 +700,8 @@
   <script type="text/babel">
     const { useState, useEffect, useRef, useCallback } = React;
 
+    const isDataUrl = (s) => typeof s === 'string' && s.startsWith('data:');
+
     // ==================== Mock Data ====================
     const PRESET_COLORS = [
       '#E53E3E', '#DD6B20', '#D69E2E', '#38A169', '#319795',
@@ -740,6 +773,8 @@
     }
 
     // ==================== Tag Form Modal ====================
+    const ICON_MAX_SIZE = 50 * 1024;
+
     function TagFormModal({ visible, editingTag, tags, onSave, onCancel }) {
       const [name, setName] = useState('');
       const [color, setColor] = useState(PRESET_COLORS[0]);
@@ -748,6 +783,7 @@
       const [description, setDescription] = useState('');
       const [sortOrder, setSortOrder] = useState(0);
       const [errors, setErrors] = useState({});
+      const fileInputRef = useRef(null);
 
       useEffect(() => {
         if (visible) {
@@ -800,6 +836,25 @@
         if (/^#[0-9A-Fa-f]{6}$/.test(val)) setColor(val);
       };
 
+      const handleIconUpload = (e) => {
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!file) return;
+        if (!/^image\/(png|svg\+xml|svg|jpeg|jpg|gif|webp)$/i.test(file.type)) {
+          setErrors(prev => ({ ...prev, icon: '请上传 PNG、SVG、JPG、GIF 或 WebP 格式的图片' }));
+          return;
+        }
+        if (file.size > ICON_MAX_SIZE) {
+          setErrors(prev => ({ ...prev, icon: '图标文件需 ≤ 50KB' }));
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => { setIconUrl(reader.result); setErrors(prev => ({ ...prev, icon: null })); };
+        reader.readAsDataURL(file);
+      };
+
+      const clearIcon = () => { setIconUrl(''); setErrors(prev => ({ ...prev, icon: null })); };
+
       if (!visible) return null;
 
       const isAtLimit = !editingTag && tags.length >= MAX_TAGS;
@@ -827,21 +882,38 @@
 
                   <div className="form-group">
                     <label className="form-label">标签图标（选填）</label>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3" style={{ flexWrap: 'wrap' }}>
                       <div className="color-picker">
                         {ICON_EMOJIS.map(emoji => (
                           <div
                             key={emoji}
-                            className={`color-swatch ${iconUrl === emoji ? 'active' : ''}`}
+                            className={`color-swatch ${!isDataUrl(iconUrl) && iconUrl === emoji ? 'active' : ''}`}
                             style={{ background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}
-                            onClick={() => setIconUrl(iconUrl === emoji ? '' : emoji)}
+                            onClick={() => { setIconUrl(iconUrl === emoji ? '' : emoji); setErrors(prev => ({ ...prev, icon: null })); }}
                           >
                             {iconUrl !== emoji && emoji}
                           </div>
                         ))}
                       </div>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/png,image/svg+xml,image/svg,image/jpeg,image/jpg,image/gif,image/webp"
+                        style={{ display: 'none' }}
+                        onChange={handleIconUpload}
+                      />
+                      <button type="button" className="btn btn-default" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
+                        上传图标
+                      </button>
+                      {isDataUrl(iconUrl) && (
+                        <div className="icon-upload-preview">
+                          <img src={iconUrl} alt="图标" />
+                          <button type="button" className="icon-upload-remove" onClick={clearIcon} title="移除图标">×</button>
+                        </div>
+                      )}
                     </div>
-                    <div className="form-hint">点击选择图标，再次点击取消；图标将展示在标签名称前</div>
+                    {errors.icon && <div className="form-hint" style={{ color: 'var(--red)' }}>{errors.icon}</div>}
+                    <div className="form-hint">点击选择预设图标或上传自定义图标（PNG/SVG，建议 24×24，≤ 50KB）；图标将展示在标签名称前</div>
                   </div>
 
                   <div className="form-group">
@@ -870,7 +942,7 @@
                     <div style={{ marginTop: 12 }}>
                       <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>预览：</span>
                       <span className="tag" style={{ background: color, color: getLabelTextColor(color) }}>
-                        {iconUrl && <span style={{ fontSize: 12 }}>{iconUrl}</span>}
+                        {iconUrl && (isDataUrl(iconUrl) ? <img src={iconUrl} alt="" style={{ width: 14, height: 14, verticalAlign: 'middle', marginRight: 2, objectFit: 'contain' }} /> : <span style={{ fontSize: 12 }}>{iconUrl}</span>)}
                         {name || '标签名称'}
                       </span>
                     </div>
@@ -958,7 +1030,7 @@
                       <div className={`checkbox ${checked ? 'checked' : ''}`} />
                       <div className="color-dot" style={{ background: tag.color }} />
                       <span className="tag" style={{ background: tag.color, color: getLabelTextColor(tag.color) }}>
-                        {tag.iconUrl && <span style={{ fontSize: 12 }}>{tag.iconUrl}</span>}
+                        {tag.iconUrl && (isDataUrl(tag.iconUrl) ? <img src={tag.iconUrl} alt="" style={{ width: 12, height: 12, verticalAlign: 'middle', marginRight: 2, objectFit: 'contain' }} /> : <span style={{ fontSize: 12 }}>{tag.iconUrl}</span>)}
                         {tag.name}
                       </span>
                       <span style={{ flex: 1 }} />
@@ -1095,7 +1167,7 @@
                         <tr key={tag.id}>
                           <td style={{ color: 'var(--text-secondary)' }}>{tag.sortOrder}</td>
                           <td style={{ fontWeight: 500 }}>{tag.name}</td>
-                          <td>{tag.iconUrl ? <span style={{ fontSize: 18 }}>{tag.iconUrl}</span> : <span className="text-secondary">—</span>}</td>
+                          <td>{tag.iconUrl ? (isDataUrl(tag.iconUrl) ? <img src={tag.iconUrl} alt="" style={{ width: 20, height: 20, verticalAlign: 'middle', objectFit: 'contain' }} /> : <span style={{ fontSize: 18 }}>{tag.iconUrl}</span>) : <span className="text-secondary">—</span>}</td>
                           <td>
                             <div className="flex items-center gap-2">
                               <div className="color-dot" style={{ background: tag.color }} />
@@ -1104,7 +1176,7 @@
                           </td>
                           <td>
                             <span className="tag" style={{ background: tag.color, color: getLabelTextColor(tag.color) }}>
-                              {tag.iconUrl && <span style={{ fontSize: 12 }}>{tag.iconUrl}</span>}
+                              {tag.iconUrl && (isDataUrl(tag.iconUrl) ? <img src={tag.iconUrl} alt="" style={{ width: 12, height: 12, verticalAlign: 'middle', marginRight: 2, objectFit: 'contain' }} /> : <span style={{ fontSize: 12 }}>{tag.iconUrl}</span>)}
                               {tag.name}
                             </span>
                           </td>
@@ -1322,7 +1394,7 @@
                                   <div className="flex items-center" style={{ flexWrap: 'wrap', gap: 6 }}>
                                     {authorTags.map(tag => (
                                       <span key={tag.id} className="tag" style={{ background: tag.color, color: getLabelTextColor(tag.color) }}>
-                                        {tag.iconUrl && <span style={{ fontSize: 11 }}>{tag.iconUrl}</span>}
+                                        {tag.iconUrl && (isDataUrl(tag.iconUrl) ? <img src={tag.iconUrl} alt="" style={{ width: 12, height: 12, verticalAlign: 'middle', marginRight: 2, objectFit: 'contain' }} /> : <span style={{ fontSize: 11 }}>{tag.iconUrl}</span>)}
                                         {tag.name}
                                       </span>
                                     ))}
