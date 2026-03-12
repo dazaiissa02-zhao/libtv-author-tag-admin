@@ -1175,35 +1175,55 @@ tbody tr:last-child td {
   max-width: 320px;
 }
 
-.detail-cert-tags {
+.detail-cert-tags,
+.detail-scope-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 16px;
+  gap: 10px 12px;
 }
 
-.detail-cert-tag-item {
+.detail-cert-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 100px;
   font-size: 13px;
-}
-
-.detail-cert-tag-item input {
+  font-weight: 500;
   cursor: pointer;
+  border: 1.5px solid;
+  background: #fff;
+  transition: all 0.15s;
 }
 
-.detail-cert-tag-item:has(input:disabled) {
+.detail-cert-chip:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.detail-cert-chip:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.detail-cert-tag-item:has(input:disabled) input {
-  cursor: not-allowed;
+.detail-cert-chip-selected {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-.detail-cancel-tag {
+.detail-cert-chip-cancel {
+  border-color: #d9d9d9;
   color: #666;
+}
+
+.detail-cert-chip-cancel.detail-cert-chip-selected {
+  background: #f5f5f5;
+  border-color: #bfbfbf;
+  color: #333;
+}
+
+.detail-cert-check {
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .detail-cert-hint {

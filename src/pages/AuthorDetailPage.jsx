@@ -9,7 +9,7 @@ export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
   const [certTypeIds, setCertTypeIds] = useState([]); // 多选，标签 id 数组
   const [isCancelCert, setIsCancelCert] = useState(false);
   const [certPeriod, setCertPeriod] = useState('');
-  const [displayScope, setDisplayScope] = useState(''); // lib | libtv
+  const [displayScopes, setDisplayScopes] = useState([]); // ['lib'] | ['libtv'] | ['lib','libtv']
   const [auditResult, setAuditResult] = useState(''); // pass | reject
   const [messageContent, setMessageContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -42,6 +42,13 @@ export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
   };
 
   const authorTags = author.tagIds.map((id) => tags.find((tag) => tag.id === id)).filter(Boolean);
+
+  function toggleDisplayScope(value) {
+    if (!value) return;
+    setDisplayScopes((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  }
 
   function toggleCertTag(tagId) {
     if (isCancelCert) return;
@@ -132,33 +139,37 @@ export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
           <div className="detail-form-row">
             <label>作者认证类型</label>
             <div className="detail-cert-tags">
-              {enabledTags.map((tag) => (
-                <label key={tag.id} className="detail-cert-tag-item">
-                  <input
-                    type="checkbox"
-                    checked={certTypeIds.includes(tag.id)}
+              {enabledTags.map((tag) => {
+                const checked = certTypeIds.includes(tag.id);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    className={`detail-cert-chip ${checked ? 'detail-cert-chip-selected' : ''}`}
                     disabled={isCancelCert}
-                    onChange={() => toggleCertTag(tag.id)}
-                  />
-                  <span
-                    className="tag detail-tag"
-                    style={{ background: tag.color, color: getLabelTextColor(tag.color) }}
+                    onClick={() => toggleCertTag(tag.id)}
+                    style={
+                      checked
+                        ? { background: tag.color, color: getLabelTextColor(tag.color), borderColor: tag.color }
+                        : { borderColor: '#d9d9d9', color: '#666' }
+                    }
                   >
+                    {checked && <span className="detail-cert-check">✓</span>}
                     {tag.name}
-                  </span>
-                </label>
-              ))}
-              <label className="detail-cert-tag-item">
-                <input
-                  type="checkbox"
-                  checked={isCancelCert}
-                  onChange={(e) => {
-                    setIsCancelCert(e.target.checked);
-                    if (e.target.checked) setCertTypeIds([]);
-                  }}
-                />
-                <span className="detail-cancel-tag">取消认证</span>
-              </label>
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                className={`detail-cert-chip detail-cert-chip-cancel ${isCancelCert ? 'detail-cert-chip-selected' : ''}`}
+                onClick={() => {
+                  setIsCancelCert(!isCancelCert);
+                  if (!isCancelCert) setCertTypeIds([]);
+                }}
+              >
+                {isCancelCert && <span className="detail-cert-check">✓</span>}
+                取消认证
+              </button>
             </div>
             {certTypeIds.length > 0 && (
               <div className="detail-cert-hint">已选 {certTypeIds.length}/{MAX_TAGS_PER_AUTHOR} 个</div>
@@ -167,17 +178,27 @@ export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
 
           <div className="detail-form-row">
             <label>显示范围</label>
-            <select
-              className="form-input form-select"
-              value={displayScope}
-              onChange={(event) => setDisplayScope(event.target.value)}
-            >
-              {DISPLAY_SCOPES.map((option) => (
-                <option key={option.value || 'empty'} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <div className="detail-scope-tags">
+              {DISPLAY_SCOPES.filter((o) => o.value).map((option) => {
+                const checked = displayScopes.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`detail-cert-chip ${checked ? 'detail-cert-chip-selected' : ''}`}
+                    onClick={() => toggleDisplayScope(option.value)}
+                    style={
+                      checked
+                        ? { background: 'var(--blue)', color: '#fff', borderColor: 'var(--blue)' }
+                        : { borderColor: '#d9d9d9', color: '#666' }
+                    }
+                  >
+                    {checked && <span className="detail-cert-check">✓</span>}
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="detail-form-row">
