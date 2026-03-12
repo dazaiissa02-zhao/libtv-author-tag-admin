@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/libtv-author-tag-admin/',
+  base: process.env.VERCEL ? '/' : '/libtv-author-tag-admin/',
 });
