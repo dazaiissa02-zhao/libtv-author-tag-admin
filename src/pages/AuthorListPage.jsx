@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { mockAuthors } from '../data/mockData';
 import AuthorTagPage from './AuthorTagPage';
+import ChangeAuthorIdentityModal from '../components/ChangeAuthorIdentityModal';
 
 export default function AuthorListPage({ tags, authors, setAuthors, addToast, onViewDetail }) {
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'tags'
   const [selectedTypes, setSelectedTypes] = useState(['lib', 'tv']); // Multi-select: ['lib'], ['tv'], or ['lib', 'tv']
+  const [changeIdentityVisible, setChangeIdentityVisible] = useState(false);
+  const [editingAuthor, setEditingAuthor] = useState(null);
   
   const [searchParams, setSearchSearchParams] = useState({
     id: '',
@@ -71,6 +74,22 @@ export default function AuthorListPage({ tags, authors, setAuthors, addToast, on
     };
     setSearchSearchParams(defaultParams);
     setAppliedSearchParams(defaultParams);
+  };
+
+  const handleChangeIdentity = (author) => {
+    setEditingAuthor(author);
+    setChangeIdentityVisible(true);
+  };
+
+  const handleSaveIdentity = (authorId, results) => {
+    setAuthors(current => 
+      current.map(author => 
+        author.authorId === authorId ? { ...author, tagIds: results.certTypeIds } : author
+      )
+    );
+    setChangeIdentityVisible(false);
+    setEditingAuthor(null);
+    addToast('success', '作者身份变更成功');
   };
 
   const finalFilteredAuthors = authors.filter(author => {
@@ -236,7 +255,7 @@ export default function AuthorListPage({ tags, authors, setAuthors, addToast, on
                       <td className="text-mono text-secondary" style={{ fontSize: '12px' }}>{author.authorId}</td>
                       <td>{author.tagIds.includes(2) ? 'Lib认证作者' : '原创作者'}</td>
                       <td>
-                        <button className="btn btn-primary btn-sm" onClick={() => addToast('info', '功能开发中')}>
+                        <button className="btn btn-primary btn-sm" onClick={() => handleChangeIdentity(author)}>
                           身份变更
                         </button>
                       </td>
@@ -257,6 +276,18 @@ export default function AuthorListPage({ tags, authors, setAuthors, addToast, on
           />
         )}
       </div>
+
+      <ChangeAuthorIdentityModal
+        visible={changeIdentityVisible}
+        author={editingAuthor}
+        tags={tags}
+        onSave={handleSaveIdentity}
+        onCancel={() => {
+          setChangeIdentityVisible(false);
+          setEditingAuthor(null);
+        }}
+        addToast={addToast}
+      />
     </div>
   );
 }

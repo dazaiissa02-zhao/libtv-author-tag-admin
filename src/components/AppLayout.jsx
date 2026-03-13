@@ -35,6 +35,8 @@ export default function AppLayout({ page, onNavigate, children }) {
             <UserListIcon />
             用户管理
           </div>
+
+          <div className="sidebar-section">作者管理</div>
           <div
             className={`sidebar-item ${authorSectionActive ? 'active' : ''}`}
             onClick={() => onNavigate('authorListPage')}
