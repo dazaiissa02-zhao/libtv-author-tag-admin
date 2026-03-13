@@ -41,7 +41,7 @@ export const initialTags = [
   {
     id: 3,
     name: '新锐创作者',
-    iconUrl: '',
+    iconUrl: '🔥',
     color: '#38A169',
     description: '新晋优质创作者',
     status: 1,
@@ -147,6 +147,8 @@ export const CERT_PERIODS = [
 export const MAX_TAGS = 20;
 export const MAX_TAGS_PER_AUTHOR = 5;
 export const ICON_MAX_SIZE = 50 * 1024;
+/** 删除颜色自定义后，所有标签使用统一默认色 */
+export const DEFAULT_TAG_COLOR = '#3182CE';
 
 /** 认证申请通过/不通过的站内信模板 */
 export const MESSAGE_TEMPLATES = {

@@ -1,20 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  DEFAULT_TAG_COLOR,
   ICON_EMOJIS,
   ICON_MAX_SIZE,
   MAX_TAGS,
-  PRESET_COLORS,
 } from '../data/mockData';
 import { getLabelTextColor, isDataUrl } from '../utils/tags';
+import ImageCropModal from './ImageCropModal';
 
 export default function TagFormModal({ visible, editingTag, tags, onSave, onCancel }) {
   const [name, setName] = useState('');
-  const [color, setColor] = useState(PRESET_COLORS[0]);
-  const [hexInput, setHexInput] = useState(PRESET_COLORS[0]);
   const [iconUrl, setIconUrl] = useState('');
   const [description, setDescription] = useState('');
   const [sortOrder, setSortOrder] = useState(0);
   const [errors, setErrors] = useState({});
+  const [cropSrc, setCropSrc] = useState(null);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -24,21 +24,18 @@ export default function TagFormModal({ visible, editingTag, tags, onSave, onCanc
 
     if (editingTag) {
       setName(editingTag.name);
-      setColor(editingTag.color);
-      setHexInput(editingTag.color);
       setIconUrl(editingTag.iconUrl || '');
       setDescription(editingTag.description);
       setSortOrder(editingTag.sortOrder);
     } else {
       setName('');
-      setColor(PRESET_COLORS[0]);
-      setHexInput(PRESET_COLORS[0]);
       setIconUrl('');
       setDescription('');
       setSortOrder(tags.length);
     }
 
     setErrors({});
+    setCropSrc(null);
   }, [editingTag, tags.length, visible]);
 
   if (!visible) {
@@ -63,8 +60,8 @@ export default function TagFormModal({ visible, editingTag, tags, onSave, onCanc
       }
     }
 
-    if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
-      nextErrors.color = '请选择有效的颜色';
+    if (!iconUrl || !iconUrl.trim()) {
+      nextErrors.icon = '请选择预设图标或上传自定义图标';
     }
 
     setErrors(nextErrors);
@@ -80,17 +77,10 @@ export default function TagFormModal({ visible, editingTag, tags, onSave, onCanc
       id: editingTag?.id,
       name: name.trim(),
       iconUrl,
-      color,
+      color: editingTag?.color ?? DEFAULT_TAG_COLOR,
       description: description.trim(),
       sortOrder,
     });
-  }
-
-  function handleHexChange(value) {
-    setHexInput(value);
-    if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-      setColor(value);
-    }
   }
 
   function handleIconUpload(event) {
@@ -119,10 +109,21 @@ export default function TagFormModal({ visible, editingTag, tags, onSave, onCanc
 
     const reader = new FileReader();
     reader.onload = () => {
-      setIconUrl(reader.result);
-      setErrors((current) => ({ ...current, icon: null }));
+      const dataUrl = reader.result;
+      if (/^image\/svg/i.test(file.type)) {
+        setIconUrl(dataUrl);
+        setErrors((current) => ({ ...current, icon: null }));
+      } else {
+        setCropSrc(dataUrl);
+        setErrors((current) => ({ ...current, icon: null }));
+      }
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleCropConfirm(croppedDataUrl) {
+    setIconUrl(croppedDataUrl);
+    setCropSrc(null);
   }
 
   function clearIcon() {
@@ -164,7 +165,9 @@ export default function TagFormModal({ visible, editingTag, tags, onSave, onCanc
               </div>
 
               <div className="form-group">
-                <label className="form-label">标签图标（选填）</label>
+                <label className="form-label">
+                  <span className="required">*</span>标签图标
+                </label>
                 <div className="flex items-center gap-3 wrap">
                   <div className="color-picker">
                     {ICON_EMOJIS.map((emoji) => (
@@ -211,46 +214,24 @@ export default function TagFormModal({ visible, editingTag, tags, onSave, onCanc
                 </div>
                 {errors.icon ? <div className="form-hint form-error">{errors.icon}</div> : null}
                 <div className="form-hint">
-                  点击选择预设图标或上传自定义图标（PNG/SVG，建议 24×24，≤ 50KB）；图标将展示在标签名称前
+                  点击选择预设图标或上传自定义图标（PNG/SVG，建议 24×24，≤ 50KB）；上传图片可裁剪；图标将展示在标签名称前
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">
-                  <span className="required">*</span>标签颜色
-                </label>
-                <div className="color-picker">
-                  {PRESET_COLORS.map((presetColor) => (
-                    <div
-                      key={presetColor}
-                      className={`color-swatch ${color === presetColor ? 'active' : ''}`}
-                      style={{ background: presetColor }}
-                      onClick={() => {
-                        setColor(presetColor);
-                        setHexInput(presetColor);
-                      }}
-                    />
-                  ))}
-                  <div className="color-hex-input">
-                    <input
-                      className="form-input"
-                      value={hexInput}
-                      onChange={(event) => handleHexChange(event.target.value)}
-                      placeholder="#000000"
-                      maxLength={7}
-                    />
-                    <div className="color-dot color-dot-lg" style={{ background: color }} />
-                  </div>
-                </div>
-                {errors.color ? <div className="form-hint form-error">{errors.color}</div> : null}
                 <div className="tag-preview-row">
                   <span className="preview-label">预览：</span>
-                  <span className="tag" style={{ background: color, color: getLabelTextColor(color) }}>
+                  <span className="tag" style={{ background: DEFAULT_TAG_COLOR, color: getLabelTextColor(DEFAULT_TAG_COLOR) }}>
                     {renderTagIcon(iconUrl, 14)}
                     {name || '标签名称'}
                   </span>
                 </div>
               </div>
+
+              {cropSrc ? (
+                <ImageCropModal
+                  src={cropSrc}
+                  onConfirm={handleCropConfirm}
+                  onCancel={() => setCropSrc(null)}
+                />
+              ) : null}
 
               <div className="form-group">
                 <label className="form-label">排序权重</label>

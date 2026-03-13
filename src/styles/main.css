@@ -635,6 +635,20 @@ tbody tr:last-child td {
   width: 400px;
 }
 
+.modal.modal-sm {
+  width: 400px;
+}
+
+.crop-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.crop-container img {
+  max-width: 100%;
+}
+
 .modal-header {
   padding: 20px 24px 16px;
   display: flex;
