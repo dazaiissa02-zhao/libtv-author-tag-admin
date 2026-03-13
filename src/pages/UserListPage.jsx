@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { mockUsers } from '../data/mockData';
 import BatchOperationModal from '../components/BatchOperationModal';
+import EditUserIdentityModal from '../components/EditUserIdentityModal';
 
 export default function UserListPage({ users = mockUsers, tags: allTags = [], addToast }) {
   const [batchIds, setBatchIds] = useState('');
@@ -15,6 +16,8 @@ export default function UserListPage({ users = mockUsers, tags: allTags = [], ad
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [batchModalVisible, setBatchModalVisible] = useState(false);
+  const [editIdentityVisible, setEditIdentityVisible] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const pageSize = 10;
 
   const filtered = users.filter((u) => {
@@ -88,6 +91,17 @@ export default function UserListPage({ users = mockUsers, tags: allTags = [], ad
     setBatchModalVisible(false);
     setSelectedRowKeys([]);
     addToast('success', `已成功为 ${selectedRowKeys.length} 位用户提交认证结果`);
+  }
+
+  function handleEditIdentity(user) {
+    setEditingUser(user);
+    setEditIdentityVisible(true);
+  }
+
+  function handleSaveIdentity(userId, identityData) {
+    setEditIdentityVisible(false);
+    setEditingUser(null);
+    addToast('success', '用户身份更新成功');
   }
 
   return (
@@ -255,7 +269,7 @@ export default function UserListPage({ users = mockUsers, tags: allTags = [], ad
                       </td>
                       <td>
                         <div className="table-actions nowrap" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <button className="btn btn-primary btn-sm">
+                          <button className="btn btn-primary btn-sm" onClick={() => handleEditIdentity(u)}>
                             身份管理
                           </button>
                           <button className="btn btn-primary btn-sm">
@@ -307,6 +321,16 @@ export default function UserListPage({ users = mockUsers, tags: allTags = [], ad
         onSave={handleBatchSave}
         onCancel={() => setBatchModalVisible(false)}
         addToast={addToast}
+      />
+
+      <EditUserIdentityModal
+        visible={editIdentityVisible}
+        user={editingUser}
+        onSave={handleSaveIdentity}
+        onCancel={() => {
+          setEditIdentityVisible(false);
+          setEditingUser(null);
+        }}
       />
     </div>
   );
