@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { mockUsers } from '../data/mockData';
+import BatchOperationModal from '../components/BatchOperationModal';
 
-export default function UserListPage({ users = mockUsers, addToast }) {
+export default function UserListPage({ users = mockUsers, tags: allTags = [], addToast }) {
   const [batchIds, setBatchIds] = useState('');
   const [batchUuids, setBatchUuids] = useState('');
   const [id, setId] = useState('');
+  const [uuid, setUuid] = useState('');
   const [nickname, setNickname] = useState('');
   const [account, setAccount] = useState('');
   const [mobile, setMobile] = useState('');
@@ -12,6 +14,7 @@ export default function UserListPage({ users = mockUsers, addToast }) {
   const [tags, setTags] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [batchModalVisible, setBatchModalVisible] = useState(false);
   const pageSize = 10;
 
   const filtered = users.filter((u) => {
@@ -50,6 +53,7 @@ export default function UserListPage({ users = mockUsers, addToast }) {
     setNickname('');
     setAccount('');
     setUuid('');
+    setUuid('');
     setMobile('');
     setStatus('');
     setTags([]);
@@ -77,7 +81,13 @@ export default function UserListPage({ users = mockUsers, addToast }) {
       addToast('warning', '请先勾选用户');
       return;
     }
-    addToast('info', `批量操作（已选 ${selectedRowKeys.length} 人）需接入后端接口`);
+    setBatchModalVisible(true);
+  }
+
+  function handleBatchSave(results) {
+    setBatchModalVisible(false);
+    setSelectedRowKeys([]);
+    addToast('success', `已成功为 ${selectedRowKeys.length} 位用户提交认证结果`);
   }
 
   return (
@@ -87,14 +97,16 @@ export default function UserListPage({ users = mockUsers, addToast }) {
       </div>
       <div className="card-body">
         <div className="user-list-batch-query">
-          <div className="batch-query-label">批量查询</div>
+          <div className="batch-query-header" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div className="batch-query-label" style={{ marginBottom: 0 }}>批量查询</div>
+          </div>
           <div className="batch-query-row">
             <div className="batch-field">
               <label>id</label>
               <textarea
                 className="form-input"
                 placeholder="多个 id 用逗号或换行分隔"
-                rows={2}
+                rows={1}
                 value={batchIds}
                 onChange={(e) => setBatchIds(e.target.value)}
               />
@@ -104,7 +116,7 @@ export default function UserListPage({ users = mockUsers, addToast }) {
               <textarea
                 className="form-input"
                 placeholder="多个 uuid 用逗号或换行分隔"
-                rows={2}
+                rows={1}
                 value={batchUuids}
                 onChange={(e) => setBatchUuids(e.target.value)}
               />
@@ -113,24 +125,6 @@ export default function UserListPage({ users = mockUsers, addToast }) {
         </div>
 
         <div className="inline-search-grid" style={{ marginBottom: 16 }}>
-          <div className="inline-field">
-            <span className="inline-field-label">id</span>
-            <input
-              className="inline-field-input"
-              placeholder="单个查询"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-            />
-          </div>
-          <div className="inline-field">
-            <span className="inline-field-label">uuid</span>
-            <input
-              className="inline-field-input"
-              placeholder="单个查询"
-              value={uuid}
-              onChange={(e) => setUuid(e.target.value)}
-            />
-          </div>
           <div className="inline-field">
             <span className="inline-field-label">用户名</span>
             <input
@@ -159,27 +153,25 @@ export default function UserListPage({ users = mockUsers, addToast }) {
             />
           </div>
           <div className="inline-field">
-            <span className="inline-field-label">状态</span>
             <select
               className="form-input"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               style={{ minWidth: 100 }}
             >
-              <option value="">全部</option>
+              <option value="">全部状态</option>
               <option value="1">正常</option>
               <option value="2">禁用</option>
             </select>
           </div>
           <div className="inline-field">
-            <span className="inline-field-label">身份类型</span>
             <select
               className="form-input"
               value={tags[0] || ''}
               onChange={(e) => setTags(e.target.value ? [e.target.value] : [])}
               style={{ minWidth: 120 }}
             >
-              <option value="">无身份</option>
+              <option value="">全部身份</option>
               <option value="liblib_official">官方账号</option>
               <option value="enterprise">企业账号</option>
               <option value="liblib_teacher">学院讲师</option>
@@ -213,12 +205,15 @@ export default function UserListPage({ users = mockUsers, addToast }) {
               <table>
                 <thead>
                   <tr>
-                    <th style={{ width: 44 }}>
-                      <input
-                        type="checkbox"
-                        checked={paged.length > 0 && paged.every((u) => selectedRowKeys.includes(u.id))}
-                        onChange={toggleAll}
-                      />
+                    <th style={{ width: 100 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input
+                          type="checkbox"
+                          checked={paged.length > 0 && paged.every((u) => selectedRowKeys.includes(u.id))}
+                          onChange={toggleAll}
+                        />
+                        <span>多选{selectedRowKeys.length > 0 ? `(${selectedRowKeys.length})` : ''}</span>
+                      </div>
                     </th>
                     <th>用户名</th>
                     <th>账号</th>
@@ -259,14 +254,14 @@ export default function UserListPage({ users = mockUsers, addToast }) {
                         {u.uuid}
                       </td>
                       <td>
-                        <div className="table-actions nowrap">
-                          <button className="btn btn-primary btn-sm" style={{ marginRight: 4 }}>
+                        <div className="table-actions nowrap" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <button className="btn btn-primary btn-sm">
                             身份管理
                           </button>
-                          <button className="btn btn-primary btn-sm" style={{ marginRight: 4 }}>
+                          <button className="btn btn-primary btn-sm">
                             {u.status === 1 ? '封禁' : '解封'}
                           </button>
-                          <button className="btn btn-primary btn-sm" style={{ marginRight: 4 }}>
+                          <button className="btn btn-primary btn-sm">
                             换绑
                           </button>
                           <button className="btn btn-primary btn-sm">注销</button>
@@ -304,6 +299,15 @@ export default function UserListPage({ users = mockUsers, addToast }) {
           </>
         )}
       </div>
+
+      <BatchOperationModal
+        visible={batchModalVisible}
+        selectedCount={selectedRowKeys.length}
+        tags={allTags}
+        onSave={handleBatchSave}
+        onCancel={() => setBatchModalVisible(false)}
+        addToast={addToast}
+      />
     </div>
   );
 }

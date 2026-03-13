@@ -65,14 +65,19 @@ export const initialTags = [
 ];
 
 export const mockAuthors = [
-  { authorId: 'a1b2c3d4-5678-90ab-cdef-111111111111', nickname: '小飞侠赛事', avatar: '#E53E3E', workCount: 12, tagIds: [1, 2] },
-  { authorId: 'e5f6g7h8-1234-56cd-ef90-222222222222', nickname: 'JOY堂多', avatar: '#3182CE', workCount: 8, tagIds: [] },
-  { authorId: 'i9j0k1l2-abcd-ef12-3456-333333333333', nickname: '林致远2087', avatar: '#805AD5', workCount: 5, tagIds: [3] },
-  { authorId: 'm3n4o5p6-7890-abcd-ef12-444444444444', nickname: '近代AIGC世界', avatar: '#38A169', workCount: 22, tagIds: [1, 3] },
-  { authorId: 'q7r8s9t0-1234-5678-90ab-555555555555', nickname: '三千间Atelier', avatar: '#D69E2E', workCount: 15, tagIds: [2] },
-  { authorId: 'u1v2w3x4-abcd-ef12-3456-666666666666', nickname: '墨冰', avatar: '#D53F8C', workCount: 9, tagIds: [1, 2, 3] },
-  { authorId: 'y5z6a7b8-7890-abcd-ef12-777777777777', nickname: '裕梦', avatar: '#319795', workCount: 18, tagIds: [] },
-  { authorId: 'c9d0e1f2-1234-5678-90ab-888888888888', nickname: '风过草原奶自天然', avatar: '#DD6B20', workCount: 3, tagIds: [4] },
+  { authorId: 'a1b2c3d4-5678-90ab-cdef-111111111111', nickname: '小飞侠赛事', avatar: '#E53E3E', workCount: 12, tagIds: [1, 2], type: 'lib' },
+  { authorId: 'e5f6g7h8-1234-56cd-ef90-222222222222', nickname: 'JOY堂多', avatar: '#3182CE', workCount: 8, tagIds: [], type: 'tv' },
+  { authorId: 'i9j0k1l2-abcd-ef12-3456-333333333333', nickname: '林致远2087', avatar: '#805AD5', workCount: 5, tagIds: [3], type: 'lib' },
+  { authorId: 'm3n4o5p6-7890-abcd-ef12-444444444444', nickname: '近代AIGC世界', avatar: '#38A169', workCount: 22, tagIds: [1, 3], type: 'tv' },
+  { authorId: 'q7r8s9t0-1234-5678-90ab-555555555555', nickname: '三千间Atelier', avatar: '#D69E2E', workCount: 15, tagIds: [2], type: 'lib' },
+  { authorId: 'u1v2w3x4-abcd-ef12-3456-666666666666', nickname: '墨冰', avatar: '#D53F8C', workCount: 9, tagIds: [1, 2, 3], type: 'tv' },
+  { authorId: 'y5z6a7b8-7890-abcd-ef12-777777777777', nickname: '裕梦', avatar: '#319795', workCount: 18, tagIds: [], type: 'lib' },
+  { authorId: 'c9d0e1f2-1234-5678-90ab-888888888888', nickname: '风过草原奶自天然', avatar: '#DD6B20', workCount: 3, tagIds: [4], type: 'tv' },
+  { authorId: 'b2c3d4e5-6789-0abc-def1-999999999999', nickname: '盈盈汐汐汐', avatar: '#ED64A6', workCount: 14, tagIds: [1, 2], type: 'lib' },
+  { authorId: 'f6g7h8i9-2345-67de-f012-000000000000', nickname: '小严小号', avatar: '#4A5568', workCount: 7, tagIds: [2], type: 'tv' },
+  { authorId: 'j0k1l2m3-bcde-f123-4567-111111111111', nickname: '133****3865', avatar: '#48BB78', workCount: 10, tagIds: [3], type: 'lib' },
+  { authorId: 'n4o5p6q7-8901-abcd-ef23-222222222222', nickname: '微信用户bade47', avatar: '#4299E1', workCount: 6, tagIds: [2], type: 'tv' },
+  { authorId: 'r8s9t0u1-2345-6789-0abc-333333333333', nickname: '小严', avatar: '#667EEA', workCount: 25, tagIds: [2], type: 'lib' },
 ];
 
 /** 用户列表 Mock 数据（全量用户） */
@@ -83,6 +88,10 @@ export const mockUsers = [
   { id: 8462753, uuid: 'e5f6g7h8-1234-56cd-ef90-222222222222', nickname: '微信用户71970e', mobile: '', avatar: null, status: 1, tags: [], createTime: '2025-01-12 16:45' },
   { id: 8462751, uuid: 'i9j0k1l2-abcd-ef12-3456-333333333333', nickname: '小飞侠赛事', mobile: '13800138000', avatar: '#E53E3E', status: 1, tags: ['liblib_teacher'], createTime: '2025-01-11 11:00' },
   { id: 8462750, uuid: 'm3n4o5p6-7890-abcd-ef12-444444444444', nickname: 'JOY堂多', mobile: '', avatar: '#3182CE', status: 2, tags: [], createTime: '2025-01-10 08:15' },
+  { id: 8462749, uuid: 'q7r8s9t0-1234-5678-90ab-555555555555', nickname: '三千间Atelier', mobile: '13911112222', avatar: '#D69E2E', status: 1, tags: ['enterprise'], createTime: '2025-01-09 15:30' },
+  { id: 8462748, uuid: 'u1v2w3x4-abcd-ef12-3456-666666666666', nickname: '墨冰', mobile: '13788889999', avatar: '#D53F8C', status: 2, tags: [], createTime: '2025-01-08 12:10' },
+  { id: 8462747, uuid: 'y5z6a7b8-7890-abcd-ef12-777777777777', nickname: '裕梦', mobile: '15866667777', avatar: '#319795', status: 1, tags: ['liblib_teaching_assistant'], createTime: '2025-01-07 10:45' },
+  { id: 8462746, uuid: 'c9d0e1f2-1234-5678-90ab-888888888888', nickname: '风过草原', mobile: '13544445555', avatar: '#DD6B20', status: 2, tags: [], createTime: '2025-01-06 09:00' },
 ];
 
 export const mockAuthorDetails = {

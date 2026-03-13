@@ -4,13 +4,14 @@ import ToastContainer from './components/ToastContainer';
 import { initialTags, mockAuthors, mockUsers } from './data/mockData';
 import AuthorDetailPage from './pages/AuthorDetailPage';
 import AuthorTagPage from './pages/AuthorTagPage';
+import AuthorListPage from './pages/AuthorListPage';
 import TagManagementPage from './pages/TagManagementPage';
 import UserListPage from './pages/UserListPage';
 
 let toastId = 0;
 
 export default function App() {
-  const [page, setPage] = useState('userList');
+  const [page, setPage] = useState('authorListPage');
   const [selectedAuthorId, setSelectedAuthorId] = useState(null);
   const [tags, setTags] = useState(initialTags);
   const [authors, setAuthors] = useState(mockAuthors);
@@ -39,18 +40,29 @@ export default function App() {
     <>
       <AppLayout page={page} onNavigate={handleNavigate}>
         {page === 'userList' ? (
-          <UserListPage users={mockUsers} addToast={addToast} />
+          <UserListPage users={mockUsers} tags={tags} addToast={addToast} />
         ) : page === 'tagList' ? (
           <TagManagementPage tags={tags} setTags={setTags} addToast={addToast} />
+        ) : page === 'authorListPage' ? (
+          <AuthorListPage
+            tags={tags}
+            authors={authors}
+            setAuthors={setAuthors}
+            addToast={addToast}
+            onViewDetail={(author) => {
+              setSelectedAuthorId(author.authorId);
+              setPage('authorDetail');
+            }}
+          />
         ) : page === 'authorDetail' ? (
           <AuthorDetailPage
             author={selectedAuthor}
             tags={tags}
-            onBack={() => handleNavigate('authorList')}
+            onBack={() => handleNavigate('authorListPage')}
             addToast={addToast}
           />
         ) : (
-          <AuthorTagPage
+          <AuthorListPage
             tags={tags}
             authors={authors}
             setAuthors={setAuthors}
