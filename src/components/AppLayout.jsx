@@ -9,7 +9,7 @@ import {
 
 const pageTitles = {
   tagList: '标签管理',
-  userList: '用户管理',
+  userList: '用户列表',
   authorListPage: '作者列表',
   authorDetail: '操作详情',
 };
@@ -27,13 +27,13 @@ export default function AppLayout({ page, onNavigate, children }) {
         </div>
 
         <nav className="sidebar-menu">
-          <div className="sidebar-section">管理</div>
+          <div className="sidebar-section">用户管理</div>
           <div
             className={`sidebar-item ${page === 'userList' ? 'active' : ''}`}
             onClick={() => onNavigate('userList')}
           >
             <UserListIcon />
-            用户管理
+            用户列表
           </div>
 
           <div className="sidebar-section">作者管理</div>
@@ -79,7 +79,7 @@ export default function AppLayout({ page, onNavigate, children }) {
         <header className="header">
           <span className="header-title">{title}</span>
           <span className="header-breadcrumb">
-            {page === 'userList' ? '用户管理' : '作者标签'} / <span>{title}</span>
+            {page === 'userList' ? '用户管理' : '作者管理'} / <span>{title}</span>
           </span>
         </header>
         <div className="content">{children}</div>
