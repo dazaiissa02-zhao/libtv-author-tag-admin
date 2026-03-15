@@ -82,9 +82,11 @@ export default function AuthorListPage({ tags, authors, setAuthors, addToast, on
   };
 
   const handleSaveIdentity = (authorId, results) => {
+    // Identity change is simpler now, it just sets the status/type
+    // In a real app, you'd update the backend. Here we just update local state.
     setAuthors(current => 
       current.map(author => 
-        author.authorId === authorId ? { ...author, tagIds: results.certTypeIds } : author
+        author.authorId === authorId ? { ...author, tagIds: results.changeTo === 'original' ? [] : author.tagIds } : author
       )
     );
     setChangeIdentityVisible(false);

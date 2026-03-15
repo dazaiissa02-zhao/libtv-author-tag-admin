@@ -6,15 +6,16 @@ import { getLabelTextColor } from '../utils/tags';
 const MAX_MESSAGE_LENGTH = 1000;
 
 export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
-  const [certTypeIds, setCertTypeIds] = useState([]); // 多选，标签 id 数组
-  const [isCancelCert, setIsCancelCert] = useState(false);
-  const [certPeriod, setCertPeriod] = useState('');
-  const [displayScopes, setDisplayScopes] = useState([]); // ['lib'] | ['libtv'] | ['lib','libtv']
-  const [auditResult, setAuditResult] = useState(''); // pass | reject
+  const [activeTab, setActiveTab] = useState('lib'); // 'lib' or 'libtv'
+  const [configs, setConfigs] = useState({
+    lib: { certTypeIds: [], isCancelCert: false, certPeriod: '', auditResult: '' },
+    libtv: { certTypeIds: [], isCancelCert: false, certPeriod: '', auditResult: '' }
+  });
   const [messageContent, setMessageContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const enabledTags = tags.filter((t) => t.status === 1);
+  const currentConfig = configs[activeTab];
 
   if (!author) {
     return (
@@ -43,30 +44,47 @@ export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
 
   const authorTags = author.tagIds.map((id) => tags.find((tag) => tag.id === id)).filter(Boolean);
 
-  function toggleDisplayScope(value) {
-    if (!value) return;
-    setDisplayScopes((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-    );
+  function updateConfig(key, value) {
+    setConfigs(prev => ({
+      ...prev,
+      [activeTab]: {
+        ...prev[activeTab],
+        [key]: value
+      }
+    }));
   }
 
   function toggleCertTag(tagId) {
-    if (isCancelCert) return;
-    setCertTypeIds((prev) => {
-      const next = prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId];
-      return next.length <= MAX_TAGS_PER_AUTHOR ? next : prev;
-    });
+    if (currentConfig.isCancelCert) return;
+    const prevIds = currentConfig.certTypeIds;
+    const nextIds = prevIds.includes(tagId) 
+      ? prevIds.filter((id) => id !== tagId) 
+      : [...prevIds, tagId];
+    
+    if (nextIds.length <= MAX_TAGS_PER_AUTHOR) {
+      updateConfig('certTypeIds', nextIds);
+    }
   }
 
   function handleSubmit() {
-    if (!isCancelCert && certTypeIds.length === 0) {
-      addToast('warning', '请选择认证类型');
+    const hasLibConfig = configs.lib.isCancelCert || configs.lib.certTypeIds.length > 0;
+    const hasLibTVConfig = configs.libtv.isCancelCert || configs.libtv.certTypeIds.length > 0;
+
+    if (!hasLibConfig && !hasLibTVConfig) {
+      addToast('warning', '请至少在一个 Tab 中选择认证类型');
       return;
     }
 
-    if (!isCancelCert && certTypeIds.length > 0 && !certPeriod) {
-      addToast('warning', '请选择认证生效周期');
-      return;
+    const tabsToValidate = [];
+    if (hasLibConfig) tabsToValidate.push('lib');
+    if (hasLibTVConfig) tabsToValidate.push('libtv');
+
+    for (const tab of tabsToValidate) {
+      const conf = configs[tab];
+      if (!conf.isCancelCert && conf.certTypeIds.length > 0 && !conf.certPeriod) {
+        addToast('warning', `请为 ${tab === 'lib' ? 'Lib' : 'LibTV'} 选择认证生效周期`);
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -135,18 +153,39 @@ export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
 
       <section className="detail-section">
         <div className="detail-section-title">操作台</div>
-        <div className="detail-section-body">
+        
+        {/* Tabs Navigation */}
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', backgroundColor: '#fafafa', marginBottom: '24px' }}>
+          {DISPLAY_SCOPES.filter(o => o.value).map(o => (
+            <div
+              key={o.value}
+              onClick={() => setActiveTab(o.value)}
+              style={{
+                padding: '12px 32px',
+                cursor: 'pointer',
+                borderBottom: activeTab === o.value ? '2px solid var(--blue)' : '2px solid transparent',
+                color: activeTab === o.value ? 'var(--blue)' : 'var(--text-secondary)',
+                fontWeight: activeTab === o.value ? '600' : '400',
+                transition: 'all 0.2s'
+              }}
+            >
+              {o.label}
+            </div>
+          ))}
+        </div>
+
+        <div className="detail-section-body" style={{ padding: '0 24px 24px' }}>
           <div className="detail-form-row">
             <label>作者认证类型</label>
             <div className="detail-cert-tags">
               {enabledTags.map((tag) => {
-                const checked = certTypeIds.includes(tag.id);
+                const checked = currentConfig.certTypeIds.includes(tag.id);
                 return (
                   <button
                     key={tag.id}
                     type="button"
                     className={`detail-cert-chip ${checked ? 'detail-cert-chip-selected' : ''}`}
-                    disabled={isCancelCert}
+                    disabled={currentConfig.isCancelCert}
                     onClick={() => toggleCertTag(tag.id)}
                     style={
                       checked
@@ -161,52 +200,28 @@ export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
               })}
               <button
                 type="button"
-                className={`detail-cert-chip detail-cert-chip-cancel ${isCancelCert ? 'detail-cert-chip-selected' : ''}`}
+                className={`detail-cert-chip detail-cert-chip-cancel ${currentConfig.isCancelCert ? 'detail-cert-chip-selected' : ''}`}
                 onClick={() => {
-                  setIsCancelCert(!isCancelCert);
-                  if (!isCancelCert) setCertTypeIds([]);
+                  const nextVal = !currentConfig.isCancelCert;
+                  updateConfig('isCancelCert', nextVal);
+                  if (nextVal) updateConfig('certTypeIds', []);
                 }}
               >
-                {isCancelCert && <span className="detail-cert-check">✓</span>}
+                {currentConfig.isCancelCert && <span className="detail-cert-check">✓</span>}
                 取消认证
               </button>
             </div>
-            {certTypeIds.length > 0 && (
-              <div className="detail-cert-hint">已选 {certTypeIds.length}/{MAX_TAGS_PER_AUTHOR} 个</div>
+            {currentConfig.certTypeIds.length > 0 && (
+              <div className="detail-cert-hint">已选 {currentConfig.certTypeIds.length}/{MAX_TAGS_PER_AUTHOR} 个</div>
             )}
-          </div>
-
-          <div className="detail-form-row">
-            <label>显示范围</label>
-            <div className="detail-scope-tags">
-              {DISPLAY_SCOPES.filter((o) => o.value).map((option) => {
-                const checked = displayScopes.includes(option.value);
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`detail-cert-chip ${checked ? 'detail-cert-chip-selected' : ''}`}
-                    onClick={() => toggleDisplayScope(option.value)}
-                    style={
-                      checked
-                        ? { background: 'var(--blue)', color: '#fff', borderColor: 'var(--blue)' }
-                        : { borderColor: '#d9d9d9', color: '#666' }
-                    }
-                  >
-                    {checked && <span className="detail-cert-check">✓</span>}
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           <div className="detail-form-row">
             <label>审核结果</label>
             <select
               className="form-input form-select"
-              value={auditResult}
-              onChange={(event) => setAuditResult(event.target.value)}
+              value={currentConfig.auditResult}
+              onChange={(event) => updateConfig('auditResult', event.target.value)}
             >
               <option value="">请选择</option>
               <option value="pass">通过</option>
@@ -214,14 +229,15 @@ export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
             </select>
           </div>
 
-          {!isCancelCert && certTypeIds.length > 0 ? (
+          {!currentConfig.isCancelCert && (
             <div className="detail-form-row">
               <label>认证生效周期</label>
               <select
                 className="form-input form-select"
-                value={certPeriod}
-                onChange={(event) => setCertPeriod(event.target.value)}
+                value={currentConfig.certPeriod}
+                onChange={(event) => updateConfig('certPeriod', event.target.value)}
               >
+                <option value="">请选择</option>
                 {CERT_PERIODS.map((option) => (
                   <option key={option.value || 'empty'} value={option.value}>
                     {option.label}
@@ -229,7 +245,7 @@ export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
                 ))}
               </select>
             </div>
-          ) : null}
+          )}
 
           <div className="detail-form-row">
             <label>站内信</label>
@@ -237,9 +253,9 @@ export default function AuthorDetailPage({ author, tags, onBack, addToast }) {
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
-                disabled={!auditResult}
+                disabled={!currentConfig.auditResult}
                 onClick={() => {
-                  const template = auditResult === 'pass' ? MESSAGE_TEMPLATES.pass : MESSAGE_TEMPLATES.reject;
+                  const template = currentConfig.auditResult === 'pass' ? MESSAGE_TEMPLATES.pass : MESSAGE_TEMPLATES.reject;
                   setMessageContent(template);
                   addToast('success', '已填充站内信模板，可编辑后提交');
                 }}
